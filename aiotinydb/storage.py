@@ -21,7 +21,7 @@ from abc import abstractmethod
 from tinydb.storages import Storage, JSONStorage
 from aiofilelock import AIOMutableFileLock, AIOImmutableFileLock
 
-from .exceptions import *
+from .exceptions import NotOverridableError, ReadonlyStorageError
 
 
 class AIOStorage(Storage):

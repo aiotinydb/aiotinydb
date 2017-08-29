@@ -18,7 +18,7 @@
 
 # pylint: disable=super-init-not-called,arguments-differ
 from tinydb import TinyDB
-from .exceptions import *
+from .exceptions import NotOverridableError, DatabaseNotReady
 from .storage import AIOJSONStorage
 
 
