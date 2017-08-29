@@ -19,7 +19,7 @@ from setuptools import setup
 
 setup(
     name='aiotinydb',
-    version='0.1.0',
+    version='1.0.0',
     author='Pavel Pletenev',
     author_email='cpp.create@gmail.com',
     url='https://github.com/ASMfreaK/aiotinydb',
