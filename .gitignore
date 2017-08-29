@@ -1,0 +1,16 @@
+venv-*
+*.pyc
+*.egg-info
+*.swp
+.mypy_*
+cover
+.coverage
+.tox
+*.po.new
+*messages.pot
+build/
+_build/
+dist/
+.*env/
+mkdocs.yml
+pydocmd.yml
