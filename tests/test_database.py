@@ -1,23 +1,19 @@
 import os
+from . import BaseCase
 import unittest
-import asyncio
-import tempfile
-from aiotinydb import AIOTinyDB, DatabaseNotReady, AIOImmutableJSONStorage
-from aiotinydb.storage import AIOStorage
+from aiotinydb import AIOTinyDB, DatabaseNotReady
+from aiotinydb.storage import AIOStorage, AIOImmutableJSONStorage, AIOJSONStorage
 from aiotinydb.exceptions import *
 from tinydb import TinyDB, where
 from tinydb.storages import MemoryStorage
 from tinydb.middlewares import Middleware
 
 
-class TestDatabase(unittest.TestCase):
-    def setUp(self):
-        self.loop = asyncio.new_event_loop()
-        self.file = tempfile.NamedTemporaryFile(delete=False)
+class TestDBDefaults(unittest.TestCase):
+    def test_default(self):
+        self.assertEqual(AIOTinyDB.DEFAULT_STORAGE, AIOJSONStorage)
 
-    def tearDown(self):
-        self.loop.close()
-        os.remove(self.file.name)
+class TestDatabase(BaseCase):
 
     def test_uninitialized_state(self):
         db = AIOTinyDB(self.file.name)
