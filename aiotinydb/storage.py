@@ -17,9 +17,12 @@
 """
 # pylint: disable=super-init-not-called
 import os
+import io
 from abc import abstractmethod
+
+import aiofiles
+import aiofilelock
 from tinydb.storages import Storage, JSONStorage
-from aiofilelock import AIOMutableFileLock, AIOImmutableFileLock
 
 from .exceptions import NotOverridableError, ReadonlyStorageError
 
@@ -59,24 +62,35 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
         self._filename = filename
         self._lock = None
         self._handle = None
+        self._aio_handle = None
+        self._enable_write = True
 
     async def __aenter__(self):
         if self._handle is None:
             try:
-                self._handle = open(self._filename, 'r+')
+                self._aio_handle = await aiofiles.open(self._filename, 'r+')
             except FileNotFoundError:
                 dirname = os.path.dirname(self._filename)
                 if dirname:
                     os.makedirs(dirname, exist_ok=True)
-                self._handle = open(self._filename, 'w+')
-            self._lock = AIOMutableFileLock(self._handle)
-            await self._lock.__aenter__()
+
+                self._aio_handle = await aiofiles.open(self._filename, 'w+')
+
+            self._lock = aiofilelock.AIOMutableFileLock(self._aio_handle._file)
+            await self._lock.acquire()
+
+            payload = await self._aio_handle.read()
+            self._handle = io.StringIO(payload)
         return self
 
     async def __aexit__(self, exc_type, exc, traceback):
         if self._handle is not None:
-            await self._lock.__aexit__(exc_type, exc, traceback)
-            self._lock = None
+            if self._enable_write:
+                await self._aio_handle.seek(0)
+                await self._aio_handle.write(self._handle.getvalue())
+
+            await self._lock.close()
+            await self._aio_handle.close()
             self._handle.close()
 
 
@@ -84,11 +98,19 @@ class AIOImmutableJSONStorage(AIOJSONStorage):
     """
     Asyncronous readonly JSON Storage for AIOTinyDB
     """
+    def __init__(self, filename, *args, **kwargs):
+        super().__init__(filename, *args, **kwargs)
+
+        self._enable_write = False
+
     async def __aenter__(self):
         if self._handle is None:
-            self._handle = open(self._filename, 'r')
-            self._lock = AIOImmutableFileLock(self._handle)
-            await self._lock.__aenter__()
+            self._aio_handle = await aiofiles.open(self._filename, 'r')
+            self._lock = aiofilelock.AIOMutableFileLock(self._aio_handle._file)
+            await self._lock.acquire()
+
+            payload = await self._aio_handle.read()
+            self._handle = io.StringIO(payload)
         return self
 
     def write(self, data):
