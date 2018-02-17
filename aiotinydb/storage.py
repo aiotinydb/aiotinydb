@@ -17,9 +17,11 @@
 """
 # pylint: disable=super-init-not-called
 import os
+import io
 from abc import abstractmethod
+
+import aiofiles
 from tinydb.storages import Storage, JSONStorage
-from aiofilelock import AIOMutableFileLock, AIOImmutableFileLock
 
 from .exceptions import NotOverridableError, ReadonlyStorageError
 
@@ -59,24 +61,29 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
         self._filename = filename
         self._lock = None
         self._handle = None
+        self._aio_handle = None
 
     async def __aenter__(self):
         if self._handle is None:
             try:
-                self._handle = open(self._filename, 'r+')
+                async with aiofiles.open(self._filename, 'r+') as in_file:
+                    payload = await in_file.read()
             except FileNotFoundError:
                 dirname = os.path.dirname(self._filename)
                 if dirname:
                     os.makedirs(dirname, exist_ok=True)
-                self._handle = open(self._filename, 'w+')
-            self._lock = AIOMutableFileLock(self._handle)
-            await self._lock.__aenter__()
+
+                async with aiofiles.open(self._filename, 'w+') as in_file:
+                    payload = await in_file.read()
+
+            self._handle = io.StringIO(payload)
         return self
 
     async def __aexit__(self, exc_type, exc, traceback):
         if self._handle is not None:
-            await self._lock.__aexit__(exc_type, exc, traceback)
-            self._lock = None
+            async with aiofiles.open(self._filename, 'w') as out_file:
+                await out_file.write(self._handle.getvalue())
+
             self._handle.close()
 
 
@@ -86,10 +93,14 @@ class AIOImmutableJSONStorage(AIOJSONStorage):
     """
     async def __aenter__(self):
         if self._handle is None:
-            self._handle = open(self._filename, 'r')
-            self._lock = AIOImmutableFileLock(self._handle)
-            await self._lock.__aenter__()
+            async with aiofiles.open(self._filename) as in_file:
+                payload = await in_file.read()
+            self._handle = io.StringIO(payload)
         return self
+
+    async def __aexit__(self, exc_type, exc, traceback):
+        if self._handle is not None:
+            self._handle.close()
 
     def write(self, data):
         raise ReadonlyStorageError('AIOImmutableJSONStorage cannot be written to')
