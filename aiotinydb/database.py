@@ -60,10 +60,12 @@ class AIOTinyDB(TinyDB):
             raise DatabaseNotReady('File is not opened. Use with AIOTinyDB(...):')
         return super().purge_tables()
 
-    def table(self, name='_default', **options):
+    def table(self, name=None, **options):
+        if name is None:
+            name = self.DEFAULT_TABLE
         if self._storage is None:
             raise DatabaseNotReady('File is not opened. Use with AIOTinyDB(...):')
-        return super().table(name='_default', **options)
+        return super().table(name, **options)
 
     def tables(self):
         if self._storage is None:

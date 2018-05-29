@@ -81,3 +81,14 @@ class TestDatabase(BaseCase):
                 async with db:
                     pass
         self.loop.run_until_complete(coro())
+
+    def test_alternate_tables(self):
+        async def coro():
+            async with AIOTinyDB(self.file.name) as db:
+                db.insert(dict(index='default'))
+                db.table('alt').insert(dict(index='alt'))
+                self.assertEqual(len(db.tables()), 2)
+                self.assertEqual(len(db), 1)
+                self.assertEqual(len(db.table()), 1)
+                self.assertEqual(len(db.table('alt')), 1)
+        self.loop.run_until_complete(coro())
