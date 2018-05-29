@@ -79,6 +79,8 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
             self._handle = io.StringIO(payload)
         return self
 
+    def write()
+
     async def __aexit__(self, exc_type, exc, traceback):
         if self._handle is not None:
             async with aiofiles.open(self._filename, 'w') as out_file:
