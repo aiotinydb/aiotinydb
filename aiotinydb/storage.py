@@ -21,8 +21,7 @@ import io
 from abc import abstractmethod
 
 import aiofiles
-from tinydb.storages import Storage, JSONStorage
-
+from tinydb.storages import Storage, JSONStorage, json
 from .exceptions import NotOverridableError, ReadonlyStorageError
 
 
@@ -79,7 +78,12 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
             self._handle = io.StringIO(payload)
         return self
 
-    def write()
+    def write(self, data):
+        self._handle.seek(0)
+        serialized = json.dumps(data, **self.kwargs)
+        self._handle.write(serialized)
+        self._handle.flush()
+        self._handle.truncate()
 
     async def __aexit__(self, exc_type, exc, traceback):
         if self._handle is not None:
