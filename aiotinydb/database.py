@@ -17,7 +17,9 @@
 """
 
 # pylint: disable=super-init-not-called,arguments-differ
+# pylint: disable=too-many-instance-attributes
 from tinydb import TinyDB
+from tinydb.database import Table, StorageProxy
 from .exceptions import NotOverridableError, DatabaseNotReady
 from .storage import AIOJSONStorage
 
@@ -49,6 +51,9 @@ class AIOTinyDB(TinyDB):
         self._table_cache = {}
         self._storage = None
         self._table = None
+        self._cls_table = kwargs.pop('table_class', self.table_class)
+        self._cls_storage_proxy = kwargs.pop('storage_proxy_class',
+                                             self.storage_proxy_class)
 
     def purge_table(self, name):
         if self._storage is None:
@@ -98,3 +103,10 @@ class AIOTinyDB(TinyDB):
 
     def __exit__(self, exc_type, exc, tb):
         raise NotOverridableError('Usual methods will not work on async')
+
+
+# Set the default table class
+AIOTinyDB.table_class = Table
+
+# Set the default storage proxy class
+AIOTinyDB.storage_proxy_class = StorageProxy
