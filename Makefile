@@ -1,4 +1,7 @@
 RELEASE_TYPE?=patch
+tox:
+	tox
+
 release:
 	make tox
 	make push
@@ -7,8 +10,6 @@ release:
 	make push
 	make pypi
 
-tox:
-	tox
 
 bump:
 	bumpversion $(RELEASE_TYPE)

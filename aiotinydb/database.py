@@ -57,29 +57,29 @@ class AIOTinyDB(TinyDB):
 
     def purge_table(self, name):
         if self._storage is None:
-            raise DatabaseNotReady('File is not opened. Use with AIOTinyDB(...):')
+            raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().purge_table(name)
 
     def purge_tables(self):
         if self._storage is None:
-            raise DatabaseNotReady('File is not opened. Use with AIOTinyDB(...):')
+            raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().purge_tables()
 
     def table(self, name=None, **options):
         if name is None:
             name = self.DEFAULT_TABLE
         if self._storage is None:
-            raise DatabaseNotReady('File is not opened. Use with AIOTinyDB(...):')
+            raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().table(name, **options)
 
     def tables(self):
         if self._storage is None:
-            raise DatabaseNotReady('File is not opened. Use with AIOTinyDB(...):')
+            raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().tables()
 
     def __getattr__(self, val):
         if self._storage is None:
-            raise AttributeError('File is not opened. Use with AIOTinyDB(...):')
+            raise AttributeError('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().__getattr__(val)
 
     async def __aenter__(self):

@@ -19,19 +19,15 @@
 
 class AIOTinyDBError(Exception):
     """Base class for AIOTinyDB exceptions"""
-    pass
 
 
 class DatabaseNotReady(AIOTinyDBError):
     """Indicates wrong usage of AIOTinyDB"""
-    pass
 
 
 class ReadonlyStorageError(AIOTinyDBError):
     """Raised when a readonly storage is attempted to be written to"""
-    pass
 
 
 class NotOverridableError(AIOTinyDBError):
     """Indicates a non-overridable method"""
-    pass
