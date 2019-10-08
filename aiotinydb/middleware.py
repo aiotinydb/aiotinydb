@@ -62,4 +62,3 @@ class CachingMiddleware(VanillaCachingMiddleware, AIOMiddlewareMixin):
         Async-aware CachingMiddleware. For more info read
         docstring for `tinydb.middlewares.CachingMiddleware`
     """
-    pass
