@@ -26,7 +26,7 @@ setup(
     license='GPLv3',
     description='asyncio compatibility shim for tinydb',
     packages=['aiotinydb'],
-    install_requires=['tinydb==3.12.1', 'aiofiles==0.4.0'],
+    install_requires=['tinydb==3.12.2', 'aiofiles==0.4.0'],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Development Status :: 4 - Beta',
