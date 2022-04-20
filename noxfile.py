@@ -19,7 +19,7 @@ def mypy(session: nox.Session):
     session.run("mypy", "--ignore-missing-imports", "aiotinydb")
 
 
-@nox.session(python=["3.6","3.7","3.8","3.9","3.10"])
+@nox.session(python=["3.6","3.7","3.8","3.9","3.10","pypy3"])
 def test(session: nox.Session):
     session.install(".", "coverage[toml]") #, "hypothesis", "responses")
     try:
