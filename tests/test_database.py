@@ -2,25 +2,25 @@ import os
 from . import BaseCase
 import unittest
 from aiotinydb import AIOTinyDB, DatabaseNotReady
-from aiotinydb.storage import AIOStorage, AIOImmutableJSONStorage, AIOJSONStorage
+from aiotinydb.storage import AIOImmutableJSONStorage, AIOJSONStorage
 from aiotinydb.exceptions import *
-from tinydb import TinyDB, where
-from tinydb.storages import MemoryStorage
-from tinydb.middlewares import Middleware
+from tinydb import where
+
+
 
 
 class TestDBDefaults(unittest.TestCase):
     def test_default(self):
-        self.assertEqual(AIOTinyDB.DEFAULT_STORAGE, AIOJSONStorage)
+        self.assertEqual(AIOTinyDB.default_storage_class, AIOJSONStorage)
 
 class TestDatabase(BaseCase):
 
     def test_uninitialized_state(self):
         db = AIOTinyDB(self.file.name)
         for meth, args in (
-                ('purge_table', ('yay',)),
-                ('purge_tables', tuple()),
-                ('table', tuple()),
+                ('drop_table', ('yay',)),
+                ('drop_tables', tuple()),
+                ('table', (db.default_table_name,)),
                 ('tables', tuple())):
             with self.assertRaises(DatabaseNotReady):
                 getattr(db, meth)(*args)
@@ -29,7 +29,7 @@ class TestDatabase(BaseCase):
                 getattr(db, meth)
         with self.assertRaises(NotOverridableError):
             with db:
-                pass
+                pass # pragma: no cover
         with self.assertRaises(NotOverridableError):
             db.__exit__(None,None,None)
         with self.assertRaises(NotOverridableError):
@@ -41,7 +41,7 @@ class TestDatabase(BaseCase):
             async with AIOTinyDB(self.file.name) as db:
                 db.insert(dict(name='yay'))
                 self.assertEqual(len(db), 1)
-                db.purge()
+                db.truncate()
                 self.assertEqual(len(db), 0)
                 tst = 'abc'
                 db.insert_multiple({'int': 1, 'char': c} for c in tst)
@@ -51,7 +51,7 @@ class TestDatabase(BaseCase):
                 self.assertEqual(len(db.search(where('int') == 2)), 3)
             async with AIOTinyDB(self.file.name, storage=AIOImmutableJSONStorage) as db:
                 self.assertEqual(len(db.search(where('int') == 2)), 3)
-                self.assertEqual(db.tables(), {AIOTinyDB.DEFAULT_TABLE})
+                self.assertEqual(db.tables(), {AIOTinyDB.default_table_name})
         self.loop.run_until_complete(coro())
 
     def test_aiostorage_not_closeable(self):
@@ -65,21 +65,23 @@ class TestDatabase(BaseCase):
             async with db:
                 db.insert(dict(index='as'))
                 self.assertEqual(len(db.tables()), 1)
-                db.purge_table(AIOTinyDB.DEFAULT_TABLE)
+                db.drop_table(db.default_table_name)
                 self.assertEqual(len(db.tables()), 0)
             async with db:
                 db.insert(dict(index='as'))
                 self.assertEqual(len(db.tables()), 1)
-                db.purge_tables()
+                db.drop_tables()
                 self.assertEqual(len(db.tables()), 0)
         self.loop.run_until_complete(coro())
 
     def test_readonly_db(self):
         async def coro():
             db = AIOTinyDB(self.file.name, storage=AIOImmutableJSONStorage)
+            async with db:
+                db.all()
             with self.assertRaises(ReadonlyStorageError):
                 async with db:
-                    pass
+                    db.insert({})
         self.loop.run_until_complete(coro())
 
     def test_alternate_tables(self):
@@ -89,6 +91,6 @@ class TestDatabase(BaseCase):
                 db.table('alt').insert(dict(index='alt'))
                 self.assertEqual(len(db.tables()), 2)
                 self.assertEqual(len(db), 1)
-                self.assertEqual(len(db.table()), 1)
+                self.assertEqual(len(db.table(db.default_table_name)), 1)
                 self.assertEqual(len(db.table('alt')), 1)
         self.loop.run_until_complete(coro())

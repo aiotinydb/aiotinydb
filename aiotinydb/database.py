@@ -18,10 +18,12 @@
 
 # pylint: disable=super-init-not-called,arguments-differ
 # pylint: disable=too-many-instance-attributes
+from typing import Optional
 from tinydb import TinyDB
-from tinydb.database import Table, StorageProxy
+from tinydb.table import Table
 from .exceptions import NotOverridableError, DatabaseNotReady
-from .storage import AIOJSONStorage
+from .middleware import AIOMiddleware
+from .storage import AIOJSONStorage, AIOStorage
 
 
 class AIOTinyDB(TinyDB):
@@ -42,35 +44,32 @@ class AIOTinyDB(TinyDB):
     loop.close()
     ```
     """
-    DEFAULT_STORAGE = AIOJSONStorage
+    default_storage_class = AIOJSONStorage
+
     def __init__(self, *args, **kwargs):
-        self._storage_cls = kwargs.pop('storage', self.DEFAULT_STORAGE)
-        self._table_name = kwargs.pop('default_table', self.DEFAULT_TABLE)
+        self._storage_cls = kwargs.pop('storage', self.default_storage_class)
+        # raise Exception(self._storage_cls)
+        self._table_name = kwargs.pop('default_table', self.default_table_name)
         self._args = args
         self._kwargs = kwargs
-        self._table_cache = {}
-        self._storage = None
+        self._tables = {}
+        self._storage: Optional[AIOJSONStorage] = None
         self._table = None
-        self._cls_table = kwargs.pop('table_class', self.table_class)
-        self._cls_storage_proxy = kwargs.pop('storage_proxy_class',
-                                             self.storage_proxy_class)
 
-    def purge_table(self, name):
+    def drop_table(self, name):
         if self._storage is None:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
-        return super().purge_table(name)
+        return super().drop_table(name)
 
-    def purge_tables(self):
+    def drop_tables(self):
         if self._storage is None:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
-        return super().purge_tables()
+        return super().drop_tables()
 
-    def table(self, name=None, **options):
-        if name is None:
-            name = self.DEFAULT_TABLE
+    def table(self, name: str, **kwargs):
         if self._storage is None:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
-        return super().table(name, **options)
+        return super().table(name, **kwargs)
 
     def tables(self):
         if self._storage is None:
@@ -85,15 +84,16 @@ class AIOTinyDB(TinyDB):
     async def __aenter__(self):
         if self._storage is None:
             self._storage = self._storage_cls(*self._args, **self._kwargs)
+            assert isinstance(self._storage, (AIOStorage, AIOMiddleware))
             await self._storage.__aenter__()
             self._table = self.table(self._table_name)
         return self
 
     async def __aexit__(self, exc_type, exc, traceback):
-        if self._storage:
+        if self._storage is not None:
             await self._storage.__aexit__(exc_type, exc, traceback)
             self._storage = None
-            self._table_cache = {}
+            self._tables = {}
 
     def close(self):
         raise NotOverridableError('Usual methods will not work on async')
@@ -108,5 +108,5 @@ class AIOTinyDB(TinyDB):
 # Set the default table class
 AIOTinyDB.table_class = Table
 
-# Set the default storage proxy class
-AIOTinyDB.storage_proxy_class = StorageProxy
+# # Set the default storage proxy class
+# AIOTinyDB.storage_proxy_class = StorageProxy

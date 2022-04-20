@@ -19,6 +19,7 @@
 from tinydb.middlewares import Middleware
 from tinydb.middlewares import CachingMiddleware as VanillaCachingMiddleware
 from .exceptions import NotOverridableError
+from .storage import AIOStorage
 
 
 class AIOMiddleware(Middleware):
@@ -29,6 +30,7 @@ class AIOMiddleware(Middleware):
         """
             Initialize middleware here
         """
+        assert isinstance(self.storage, AIOStorage)
         await self.storage.__aenter__()
         return self
 
@@ -36,6 +38,7 @@ class AIOMiddleware(Middleware):
         """
             Finalize middleware here
         """
+        assert isinstance(self.storage, AIOStorage)
         await self.storage.__aexit__(exc_type, exc, traceback)
 
     def close(self):
@@ -50,6 +53,7 @@ class AIOMiddlewareMixin(AIOMiddleware):
         Mixin class to enable usage of non-async Middlewares
     """
     async def __aexit__(self, exc_type, exc, traceback):
+        assert isinstance(self.storage, AIOStorage)
         try:
             self.close()
         except NotOverridableError:

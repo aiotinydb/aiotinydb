@@ -18,10 +18,11 @@
 # pylint: disable=super-init-not-called
 import os
 import io
+import json
 from abc import abstractmethod
-
+from typing import Optional
 import aiofiles
-from tinydb.storages import Storage, JSONStorage, json
+from tinydb.storages import Storage, JSONStorage
 from .exceptions import NotOverridableError, ReadonlyStorageError
 
 
@@ -59,7 +60,7 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
         self.kwargs = kwargs
         self._filename = filename
         self._lock = None
-        self._handle = None
+        self._handle: Optional[io.StringIO] = None
         self._aio_handle = None
 
     async def __aenter__(self):
@@ -79,6 +80,7 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
         return self
 
     def write(self, data):
+        assert isinstance(self._handle, io.StringIO)
         self._handle.seek(0)
         serialized = json.dumps(data, **self.kwargs)
         self._handle.write(serialized)

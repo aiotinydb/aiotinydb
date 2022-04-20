@@ -1,5 +1,5 @@
 from . import BaseCase
-from aiotinydb import AIOTinyDB, DatabaseNotReady
+from aiotinydb import AIOTinyDB
 from aiotinydb.storage import AIOJSONStorage
 from aiotinydb.middleware import AIOMiddleware, CachingMiddleware, AIOMiddlewareMixin
 from aiotinydb.exceptions import NotOverridableError
@@ -16,13 +16,13 @@ class TestMiddleware(BaseCase):
 
     def test_not_cloaseable(self):
         with self.assertRaises(NotOverridableError):
-            AIOMiddleware().close()
+            AIOMiddleware(JSONStorage).close()
 
 written_to = 0
 read_from = 0
 closed = False
 class VanillaMiddleware(Middleware):
-    def __init(self, middleware_cls):
+    def __init__(self, middleware_cls):
         super(VanillaMiddleware, self).__init__(middleware_cls)
         global written_to, read_from, closed
         written_to = 0
