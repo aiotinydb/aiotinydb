@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = 'aiotinydb'
-version = '1.2.2'
+version = '2.0.0'
 description = 'asyncio compatibility shim for tinydb'
 readme = "README.md"
 requires-python = ">=3.6"
