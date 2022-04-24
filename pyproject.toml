@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.6"
 license = { file = "LICENSE.md" }
 authors = [{ name = "Pavel Pletenev", email = "cpp.create@gmail.com" }]
+maintainers = [{ name = "d-k-bo", email = "dkbo@mail.de" }]
 classifiers = [
     'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
     'Development Status :: 4 - Beta',
@@ -26,7 +27,7 @@ classifiers = [
 dependencies = ['tinydb>=4.7.0', 'aiofiles>=0.8.0']
 
     [project.urls]
-    Source = "https://github.com/ASMfreaK/aiotinydb"
+    Source = "https://github.com/aiotinydb/aiotinydb"
 
 [tool.flake8]
 max-line-length = 100
