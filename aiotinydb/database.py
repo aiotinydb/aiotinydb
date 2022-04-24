@@ -44,17 +44,17 @@ class AIOTinyDB(TinyDB):
     loop.close()
     ```
     """
+    # The class that will be used to create table instances
+    table_class = Table
+    # The class that will be used by default to create storage instances
     default_storage_class = AIOJSONStorage
 
     def __init__(self, *args, **kwargs):
         self._storage_cls = kwargs.pop('storage', self.default_storage_class)
-        # raise Exception(self._storage_cls)
-        self._table_name = kwargs.pop('default_table', self.default_table_name)
         self._args = args
         self._kwargs = kwargs
         self._tables = {}
         self._storage: Optional[AIOJSONStorage] = None
-        self._table = None
 
     def drop_table(self, name):
         if self._storage is None:
@@ -86,7 +86,7 @@ class AIOTinyDB(TinyDB):
             self._storage = self._storage_cls(*self._args, **self._kwargs)
             assert isinstance(self._storage, (AIOStorage, AIOMiddleware))
             await self._storage.__aenter__()
-            self._table = self.table(self._table_name)
+            self._tables[self.default_table_name] = self.table(self.default_table_name)
         return self
 
     async def __aexit__(self, exc_type, exc, traceback):
@@ -103,10 +103,3 @@ class AIOTinyDB(TinyDB):
 
     def __exit__(self, exc_type, exc, tb):
         raise NotOverridableError('Usual methods will not work on async')
-
-
-# Set the default table class
-AIOTinyDB.table_class = Table
-
-# # Set the default storage proxy class
-# AIOTinyDB.storage_proxy_class = StorageProxy
