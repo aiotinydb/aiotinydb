@@ -59,7 +59,6 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
         self.args = args
         self.kwargs = kwargs
         self._filename = filename
-        self._lock = None
         self._handle: Optional[io.StringIO] = None
         self._aio_handle = None
 

@@ -18,6 +18,7 @@
 
 # pylint: disable=super-init-not-called,arguments-differ
 # pylint: disable=too-many-instance-attributes
+from asyncio import Lock
 from typing import Optional
 from tinydb import TinyDB
 from tinydb.table import Table
@@ -55,6 +56,7 @@ class AIOTinyDB(TinyDB):
         self._kwargs = kwargs
         self._tables = {}
         self._storage: Optional[AIOJSONStorage] = None
+        self._lock: Optional[Lock] = None
 
     def drop_table(self, name):
         if self._storage is None:
@@ -82,6 +84,9 @@ class AIOTinyDB(TinyDB):
         return super().__getattr__(val)
 
     async def __aenter__(self):
+        if self._lock is None:
+            self._lock = Lock()
+        await self._lock.acquire()
         if self._storage is None:
             self._storage = self._storage_cls(*self._args, **self._kwargs)
             assert isinstance(self._storage, (AIOStorage, AIOMiddleware))
@@ -94,6 +99,8 @@ class AIOTinyDB(TinyDB):
             await self._storage.__aexit__(exc_type, exc, traceback)
             self._storage = None
             self._tables = {}
+        assert self._lock is not None
+        self._lock.release()
 
     def close(self):
         raise NotOverridableError('Usual methods will not work on async')
