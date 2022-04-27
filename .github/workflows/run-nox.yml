@@ -1,0 +1,14 @@
+name: Lint, type-check, run tests
+on: [push, pull_request]
+jobs:
+  run-nox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: excitedleigh/setup-nox@4c62aee44396909396d10137c747b2633deeee76
+      - name: Lint
+        run: nox -s lint
+      - name: Type-check
+        run: nox -s mypy
+      - name: Run tests
+        run: nox -s test
