@@ -19,7 +19,7 @@
 # pylint: disable=super-init-not-called,arguments-differ
 # pylint: disable=too-many-instance-attributes
 from asyncio import Lock
-from typing import Optional
+from typing import Optional, Union
 from tinydb import TinyDB
 from tinydb.table import Table
 from .exceptions import NotOverridableError, DatabaseNotReady
@@ -51,35 +51,34 @@ class AIOTinyDB(TinyDB):
     default_storage_class = AIOJSONStorage
 
     def __init__(self, *args, **kwargs):
-        self._storage_cls = kwargs.pop('storage', self.default_storage_class)
-        self._args = args
-        self._kwargs = kwargs
+        storage = kwargs.pop('storage', self.default_storage_class)
+        self._storage: Union[AIOStorage, AIOMiddleware] = storage(*args, **kwargs)
+        self._opened: bool = False
         self._tables = {}
-        self._storage: Optional[AIOJSONStorage] = None
         self._lock: Optional[Lock] = None
 
     def drop_table(self, name):
-        if self._storage is None:
+        if not self._opened:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().drop_table(name)
 
     def drop_tables(self):
-        if self._storage is None:
+        if not self._opened:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().drop_tables()
 
     def table(self, name: str, **kwargs):
-        if self._storage is None:
+        if not self._opened:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().table(name, **kwargs)
 
     def tables(self):
-        if self._storage is None:
+        if not self._opened:
             raise DatabaseNotReady('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().tables()
 
     def __getattr__(self, val):
-        if self._storage is None:
+        if not self._opened:
             raise AttributeError('File is not opened. Use `async with AIOTinyDB(...):`')
         return super().__getattr__(val)
 
@@ -87,17 +86,16 @@ class AIOTinyDB(TinyDB):
         if self._lock is None:
             self._lock = Lock()
         await self._lock.acquire()
-        if self._storage is None:
-            self._storage = self._storage_cls(*self._args, **self._kwargs)
-            assert isinstance(self._storage, (AIOStorage, AIOMiddleware))
+        if not self._opened:
             await self._storage.__aenter__()
+            self._opened = True
             self._tables[self.default_table_name] = self.table(self.default_table_name)
         return self
 
     async def __aexit__(self, exc_type, exc, traceback):
-        if self._storage is not None:
+        if self._opened:
+            self._opened = False
             await self._storage.__aexit__(exc_type, exc, traceback)
-            self._storage = None
             self._tables = {}
         assert self._lock is not None
         self._lock.release()
