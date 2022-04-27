@@ -24,7 +24,11 @@ classifiers = [
     'Operating System :: OS Independent',
     'Intended Audience :: Developers',
 ]
-dependencies = ['tinydb>=4.7.0', 'aiofiles>=0.8.0']
+dependencies = [
+    'tinydb>=4.7.0',
+    'aiofiles>=0.8.0',
+    'typing_extensions>=3.10; python_version<"3.8"',
+]
 
     [project.urls]
     Source = "https://github.com/aiotinydb/aiotinydb"
@@ -56,7 +60,12 @@ inline-quotes = "'"
 
 [tool.coverage.report]
 show_missing = true
-exclude_lines = ["pragma: no cover", "raise NotImplementedError"]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "from typing import",
+    "from typing_extensions import",
+]
 
 [tool.pylint.master]
 py-version = "3.10"

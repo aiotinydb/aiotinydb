@@ -6,7 +6,7 @@ asyncio compatibility shim for [`TinyDB`](https://github.com/msiemens/tinydb)
 Enables usage of TinyDB in asyncio-aware contexts without slow syncronous IO.
 
 
-See documentation on compatible version of [`TinyDB`](https://tinydb.readthedocs.io/en/v3.12.1/).
+See documentation on compatible version of [`TinyDB`](https://tinydb.readthedocs.io/en/v4.7.0/).
 
 Basically all API calls from `TinyDB` are supported in `AIOTinyDB`. With the following exceptions: you **should not** use basic `with` syntax and `close` functions. Instead, you **should** use `async with`.  
 
@@ -24,6 +24,7 @@ loop.close()
 ```
 
 ## Middleware
+
 Any middlewares you use **should be** async-aware. See example:
 
 ```python
@@ -39,6 +40,12 @@ class CachingMiddleware(VanillaCachingMiddleware, AIOMiddlewareMixin):
 ```
 
 If middleware requires some special handling on entry and exit, override `__aenter__` and `__aexit__`.
+
+## Concurrent database access
+
+Instances of `AIOTinyDB` support database access from multiple coroutines.
+
+On **unix-like systems**, it's also possible to access one database concurrently from multiple processes when using `AIOJSONStorage` (the default) or `AIOImmutableJSONStorage`.
 
 ## Installation
 

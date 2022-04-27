@@ -22,8 +22,16 @@ import json
 from abc import abstractmethod
 from typing import Optional
 import aiofiles
+from aiofiles.threadpool.text import AsyncTextIOWrapper
 from tinydb.storages import Storage, JSONStorage
 from .exceptions import NotOverridableError, ReadonlyStorageError
+
+try:
+    # `fcntl.flock()` is only available on unix
+    from .filelock import AIOFileLock
+    FILELOCK_SUPPORTED = True
+except ImportError:  # pragma: no cover
+    FILELOCK_SUPPORTED = False  # pragma: no cover
 
 
 class AIOStorage(Storage):
@@ -59,23 +67,25 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
         self.args = args
         self.kwargs = kwargs
         self._filename = filename
+        self._file: Optional[AsyncTextIOWrapper] = None
+        self._lock: Optional['AIOFileLock'] = None
         self._handle: Optional[io.StringIO] = None
-        self._aio_handle = None
 
     async def __aenter__(self):
         if self._handle is None:
             try:
-                async with aiofiles.open(self._filename, 'r+') as in_file:
-                    payload = await in_file.read()
+                self._file = await aiofiles.open(self._filename, 'r+')
             except FileNotFoundError:
                 dirname = os.path.dirname(self._filename)
                 if dirname:
                     os.makedirs(dirname, exist_ok=True)
 
-                async with aiofiles.open(self._filename, 'w+') as in_file:
-                    payload = await in_file.read()
+                self._file = await aiofiles.open(self._filename, 'w+')
 
-            self._handle = io.StringIO(payload)
+            if FILELOCK_SUPPORTED:
+                self._lock = AIOFileLock(self._file)
+                await self._lock.acquire()
+            self._handle = io.StringIO(await self._file.read())
         return self
 
     def write(self, data):
@@ -88,10 +98,20 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
 
     async def __aexit__(self, exc_type, exc, traceback):
         if self._handle is not None:
-            async with aiofiles.open(self._filename, 'w') as out_file:
-                await out_file.write(self._handle.getvalue())
+            assert self._file is not None
 
+            await self._file.seek(0)
+            await self._file.write(self._handle.getvalue())
+            await self._file.flush()
+            await self._file.truncate()
+            if FILELOCK_SUPPORTED:
+                assert self._lock is not None
+                self._lock.release()
+                self._lock = None
+            await self._file.close()
             self._handle.close()
+            self._file = None
+            self._handle = None
 
 
 class AIOImmutableJSONStorage(AIOJSONStorage):
@@ -100,14 +120,25 @@ class AIOImmutableJSONStorage(AIOJSONStorage):
     """
     async def __aenter__(self):
         if self._handle is None:
-            async with aiofiles.open(self._filename) as in_file:
-                payload = await in_file.read()
-            self._handle = io.StringIO(payload)
+            self._file = await aiofiles.open(self._filename, 'r')
+            if FILELOCK_SUPPORTED:
+                self._lock = AIOFileLock(self._file)
+                await self._lock.acquire()
+            self._handle = io.StringIO(await self._file.read())
         return self
 
     async def __aexit__(self, exc_type, exc, traceback):
         if self._handle is not None:
+            assert self._file is not None
+
+            if FILELOCK_SUPPORTED:
+                assert self._lock is not None
+                self._lock.release()
+                self._lock = None
+            await self._file.close()
             self._handle.close()
+            self._file = None
+            self._handle = None
 
     def write(self, data):
         raise ReadonlyStorageError('AIOImmutableJSONStorage cannot be written to')

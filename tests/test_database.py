@@ -96,7 +96,7 @@ class TestDatabase(BaseCase):
                 self.assertEqual(len(db.table('alt')), 1)
         self.loop.run_until_complete(coro())
 
-    def test_concurrent_access(self):
+    def test_concurrency_one_instance(self):
         db = AIOTinyDB(self.file.name)
         async def access_db(sleep_duration: float):
             async with db:
@@ -105,4 +105,20 @@ class TestDatabase(BaseCase):
 
         async def coro():
             await asyncio.gather(access_db(0), access_db(0.1))
+            async with AIOTinyDB(self.file.name) as db:
+                assert len(db.all()) == 2
+
+        self.loop.run_until_complete(coro())
+
+    def test_concurrency_multiple_instances(self):
+        async def access_db(sleep_duration: float):
+            async with AIOTinyDB(self.file.name) as db:
+                await asyncio.sleep(sleep_duration)
+                db.insert({})
+
+        async def coro():
+            await asyncio.gather(access_db(0), access_db(0.1))
+            async with AIOTinyDB(self.file.name) as db:
+                assert len(db.all()) == 2
+
         self.loop.run_until_complete(coro())
