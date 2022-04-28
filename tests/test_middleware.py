@@ -18,51 +18,45 @@ class TestMiddleware(BaseCase):
         with self.assertRaises(NotOverridableError):
             AIOMiddleware(JSONStorage).close()
 
-written_to = 0
-read_from = 0
-closed = False
+
 class VanillaMiddleware(Middleware):
     def __init__(self, middleware_cls):
-        super(VanillaMiddleware, self).__init__(middleware_cls)
-        global written_to, read_from, closed
-        written_to = 0
-        read_from = 0
-        closed = False
+        super().__init__(middleware_cls)
+        self.written_to = 0
+        self.read_from = 0
+        self.closed = False
 
     def write(self, *args):
-        global written_to, read_from, closed
-        written_to += 1
+        self.written_to += 1
         return self.storage.write(*args)
 
     def read(self):
-        global written_to, read_from, closed
-        read_from += 1
+        self.read_from += 1
         return self.storage.read()
 
     def close(self):
-        global written_to, read_from, closed
-        closed = True
+        self.closed = True
+        self.storage.close()
 
 class AIOVanillaMiddleware(VanillaMiddleware, AIOMiddlewareMixin):
     pass
 
 class TestMixin(BaseCase):
     def test_mixin(self):
-        global written_to, read_from, closed
-        middleware = VanillaMiddleware(JSONStorage)
-        with TinyDB(self.file.name, storage=middleware) as db:
+        sync_middleware = VanillaMiddleware(JSONStorage)
+        with TinyDB(self.file.name, storage=sync_middleware) as sync_db:
             tst = 'abc'
-            db.insert_multiple({'int': 1, 'char': c} for c in tst)
-        self.assertGreaterEqual(read_from, 1)
-        self.assertGreaterEqual(written_to, 1)
-        self.assertTrue(closed)
+            sync_db.insert_multiple({'int': 1, 'char': c} for c in tst)
+        assert sync_middleware.read_from
+        assert sync_middleware.written_to
+        assert sync_middleware.closed
 
         async def test():
-            middleware = AIOVanillaMiddleware(AIOJSONStorage)
-            async with AIOTinyDB(self.file.name, storage=middleware):
+            async_middleware = AIOVanillaMiddleware(AIOJSONStorage)
+            async with AIOTinyDB(self.file.name, storage=async_middleware) as async_db:
                 tst = 'abc'
-                db.insert_multiple({'int': 1, 'char': c} for c in tst)
-            self.assertGreaterEqual(read_from, 1)
-            self.assertGreaterEqual(written_to, 1)
-            self.assertTrue(closed)
+                async_db.insert_multiple({'int': 1, 'char': c} for c in tst)
+            assert async_middleware.read_from
+            assert async_middleware.written_to
+            assert async_middleware.closed
         self.loop.run_until_complete(test())
