@@ -27,7 +27,6 @@ classifiers = [
 dependencies = [
     'tinydb>=4.7.0',
     'aiofiles>=0.8.0',
-    'typing_extensions>=3.10; python_version<"3.8"',
 ]
 
     [project.urls]
@@ -65,7 +64,18 @@ exclude_lines = [
     "raise NotImplementedError",
     "from typing import",
     "from typing_extensions import",
+    "if TYPE_CHECKING",
 ]
 
 [tool.pylint.master]
 py-version = "3.10"
+
+[tool.pylint.similarities]
+ignore-signatures = true
+
+[tool.mypy]
+plugins = ["tinydb.mypy_plugin:plugin"]
+files = ["aiotinydb", "tests"]
+show_error_codes = true
+warn_unused_ignores = true
+warn_unused_configs = true

@@ -19,22 +19,24 @@ concurrent access from several processes on unix systems.
 """
 
 import asyncio
-import sys
 from fcntl import flock, LOCK_EX, LOCK_NB, LOCK_UN
-from typing import Optional, Union
-
-if sys.version_info >= (3, 8):
-    from typing import Literal, Protocol
-else:
-    from typing_extensions import Literal, Protocol
+from types import TracebackType
+from typing import TYPE_CHECKING, Optional, Union, Type
 
 
-class HasFileno(Protocol):  # pylint: disable=missing-class-docstring, too-few-public-methods
-    def fileno(self) -> int:  # pylint: disable=missing-function-docstring
-        ...  # pragma: no cover
+if TYPE_CHECKING:
+    import sys
 
+    if sys.version_info >= (3, 8):
+        from typing import Literal, Protocol
+    else:
+        from typing_extensions import Literal, Protocol
 
-FileDescriptorLike = Union[int, HasFileno]
+    class HasFileno(Protocol):  # pylint: disable=missing-class-docstring, too-few-public-methods
+        def fileno(self) -> int:  # pylint: disable=missing-function-docstring
+            ...
+
+    FileDescriptorLike = Union[int, HasFileno]
 
 
 class AIOFileLock:
@@ -67,24 +69,29 @@ class AIOFileLock:
     """
     def __init__(
         self,
-        file_descriptor: FileDescriptorLike,
+        file_descriptor: 'FileDescriptorLike',
         loop: Optional[asyncio.AbstractEventLoop] = None,
     ) -> None:
-        self.file_descriptor: FileDescriptorLike = file_descriptor
+        self.file_descriptor = file_descriptor
         self.loop = loop
         self._locked: bool = False
 
     async def __aenter__(self) -> None:
         await self.acquire()
 
-    async def __aexit__(self, exc_type, exc, traceback):
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         self.release()
 
     def locked(self) -> bool:
         """Return True if lock is acquired."""
         return self._locked
 
-    async def acquire(self) -> Literal[True]:
+    async def acquire(self) -> 'Literal[True]':
         """Acquire a lock.
 
         This method blocks until the lock is unlocked, then sets it to

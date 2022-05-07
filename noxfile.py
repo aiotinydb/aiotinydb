@@ -15,8 +15,8 @@ def lint(session: nox.Session):
 
 @nox.session
 def mypy(session: nox.Session):
-    session.install("mypy", "types-aiofiles")
-    session.run("mypy", "--ignore-missing-imports", "aiotinydb")
+    session.install(".", "mypy", "types-aiofiles")
+    session.run("mypy")
 
 
 @nox.session(python=["3.6","3.7","3.8","3.9","3.10","pypy3"])
