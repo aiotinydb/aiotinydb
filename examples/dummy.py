@@ -1,3 +1,5 @@
+"""This examples shows the basic usage of aioinydb."""
+
 import asyncio
 
 from aiotinydb import AIOTinyDB

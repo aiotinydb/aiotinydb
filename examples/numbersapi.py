@@ -1,3 +1,8 @@
+"""
+This example shows how aiotinydb can be used in the context of
+asynchronous HTTP requests.
+"""
+
 __requires__ = "httpx"
 
 import asyncio

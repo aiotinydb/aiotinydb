@@ -8,7 +8,7 @@ Enables usage of TinyDB in asyncio-aware contexts without slow syncronous IO.
 
 See documentation on compatible version of [`TinyDB`](https://tinydb.readthedocs.io/en/v4.7.0/).
 
-Basically all API calls from `TinyDB` are supported in `AIOTinyDB`. With the following exceptions: you **should not** use basic `with` syntax and `close` functions. Instead, you **should** use `async with`.  
+Basically all API calls from `TinyDB` are supported in `AIOTinyDB`. With the following exceptions: you **should not** use basic `with` syntax and `close` functions. Instead, you **should** use `async with`.
 
 ```python
 import asyncio
@@ -22,6 +22,8 @@ loop = asyncio.new_event_loop()
 loop.run_until_complete(test())
 loop.close()
 ```
+
+CPU-bound operations like `db.search()`, `db.update()` etc. are executed synchronously and may block the event loop under heavy load. Use multiprocessing if that's an issue (see [examples/processpool.py](examples/processpool.py) for an example).
 
 ## Middleware
 
