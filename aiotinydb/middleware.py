@@ -15,7 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-# pylint: disable=too-few-public-methods, no-self-use
+# pylint: disable=too-few-public-methods
 from types import TracebackType
 from typing import NoReturn, Optional, Type, TypeVar
 from tinydb.middlewares import Middleware
