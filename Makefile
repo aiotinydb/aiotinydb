@@ -1,9 +1,9 @@
 RELEASE_TYPE?=patch
-tox:
-	tox
+nox:
+	nox
 
 release:
-	make tox
+	make nox
 	make push
 	make bump
 	make tag
@@ -24,5 +24,4 @@ push:
 	git push --tags
 
 pypi:
-	python3 setup.py sdist bdist_wheel
-	twine upload -s dist/*
+	flit publish
