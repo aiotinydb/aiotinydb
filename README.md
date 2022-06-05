@@ -1,5 +1,6 @@
 # aiotinydb
-[![PyPI](https://img.shields.io/pypi/v/aiotinydb.svg)](https://pypi.python.org/pypi/aiotinydb) [![PyPI](https://img.shields.io/pypi/pyversions/aiotinydb.svg)](https://pypi.python.org/pypi/aiotinydb) [![PyPI](https://img.shields.io/pypi/l/aiotinydb.svg)](https://pypi.python.org/pypi/aiotinydb) [![Build Status](https://travis-ci.org/ASMfreaK/aiotinydb.svg?branch=master)](https://travis-ci.org/ASMfreaK/aiotinydb) [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/ASMfreaK)
+
+[![PyPI](https://img.shields.io/pypi/v/aiotinydb.svg)](https://pypi.python.org/pypi/aiotinydb) [![PyPI](https://img.shields.io/pypi/pyversions/aiotinydb.svg)](https://pypi.python.org/pypi/aiotinydb) [![PyPI](https://img.shields.io/pypi/l/aiotinydb.svg)](https://pypi.python.org/pypi/aiotinydb) ![Build Status](https://github.com/aiotinydb/aiotinydb/actions/workflows/ci.yml/badge.svg) [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/ASMfreaK)
 
 asyncio compatibility shim for [`TinyDB`](https://github.com/msiemens/tinydb)
 

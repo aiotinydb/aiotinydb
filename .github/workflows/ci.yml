@@ -1,0 +1,30 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: excitedleigh/setup-nox@v2.1.0
+      - run: nox -s lint
+  type-check:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: excitedleigh/setup-nox@v2.1.0
+      - run: nox -s mypy
+  tests:
+    name: Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        venv_version: ["3.6", "3.7", "3.8", "3.9", "3.10", "pypy3"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: excitedleigh/setup-nox@v2.1.0
+      - run: nox -s test-${{ matrix.venv_version }} --error-on-missing-interpreters
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v2
