@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.6"
 license = { file = "LICENSE.md" }
 authors = [{ name = "Pavel Pletenev", email = "cpp.create@gmail.com" }]
-maintainers = [{ name = "d-k-bo", email = "dkbo@mail.de" }]
+maintainers = [{ name = "d-k-bo", email = "d-k-bo@mailbox.org" }]
 classifiers = [
     'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
     'Development Status :: 4 - Beta',
