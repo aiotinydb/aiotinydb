@@ -15,30 +15,42 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-# pylint: disable=too-few-public-methods, no-self-use
+# pylint: disable=too-few-public-methods
+from types import TracebackType
+from typing import NoReturn, Optional, Type, TypeVar
 from tinydb.middlewares import Middleware
 from tinydb.middlewares import CachingMiddleware as VanillaCachingMiddleware
 from .exceptions import NotOverridableError
+from .storage import AIOStorage
+
+AIOMiddlewareT = TypeVar('AIOMiddlewareT', bound='AIOMiddleware')
 
 
 class AIOMiddleware(Middleware):
     """
         Asyncronous middleware base class
     """
-    async def __aenter__(self):
+    async def __aenter__(self: AIOMiddlewareT) -> AIOMiddlewareT:
         """
             Initialize middleware here
         """
+        assert isinstance(self.storage, AIOStorage)
         await self.storage.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc, traceback):
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         """
             Finalize middleware here
         """
-        await self.storage.__aexit__(exc_type, exc, traceback)
+        assert isinstance(self.storage, AIOStorage)
+        await self.storage.__aexit__(exc_type, exc_value, exc_tb)
 
-    def close(self):
+    def close(self) -> NoReturn:
         """
         This is not called and should NOT be used
         """
@@ -49,12 +61,18 @@ class AIOMiddlewareMixin(AIOMiddleware):
     """
         Mixin class to enable usage of non-async Middlewares
     """
-    async def __aexit__(self, exc_type, exc, traceback):
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
+        assert isinstance(self.storage, AIOStorage)
         try:
             self.close()
         except NotOverridableError:
             pass
-        await self.storage.__aexit__(exc_type, exc, traceback)
+        await self.storage.__aexit__(exc_type, exc_value, exc_tb)
 
 
 class CachingMiddleware(VanillaCachingMiddleware, AIOMiddlewareMixin):

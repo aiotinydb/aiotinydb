@@ -10,4 +10,5 @@ class BaseCase(unittest.TestCase):
 
     def tearDown(self):
         self.loop.close()
+        self.file.close()
         os.remove(self.file.name)

@@ -18,11 +18,25 @@
 # pylint: disable=super-init-not-called
 import os
 import io
+import json
 from abc import abstractmethod
-
+from types import TracebackType
+from typing import Any, Dict, Optional, NoReturn, Type, TypeVar, Union
 import aiofiles
-from tinydb.storages import Storage, JSONStorage, json
+from aiofiles.threadpool.text import AsyncTextIOWrapper
+from tinydb.storages import Storage, JSONStorage
 from .exceptions import NotOverridableError, ReadonlyStorageError
+
+try:
+    # `fcntl.flock()` is only available on unix
+    from .filelock import AIOFileLock
+    FILELOCK_SUPPORTED = True
+except ImportError:  # pragma: no cover
+    FILELOCK_SUPPORTED = False  # pragma: no cover
+
+AIOStorageT = TypeVar('AIOStorageT', bound='AIOStorage')
+AIOJSONStorageT = TypeVar('AIOJSONStorageT', bound='AIOJSONStorage')
+StrOrBytesPath = Union[str,  bytes, 'os.PathLike[str]', 'os.PathLike[bytes]']
 
 
 class AIOStorage(Storage):
@@ -30,20 +44,29 @@ class AIOStorage(Storage):
     Abstract asyncio Storage class
     """
     @abstractmethod
-    async def __aenter__(self):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        raise NotImplementedError('To be overridden!')
+
+    @abstractmethod
+    async def __aenter__(self: AIOStorageT) -> AIOStorageT:
         """
         Initialize storage in async manner (open files, connections, etc...)
         """
         raise NotImplementedError('To be overridden!')
 
     @abstractmethod
-    async def __aexit__(self, exc_type, exc, traceback):
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         """
         Finalize storage in async manner (close files, connections, etc...)
         """
         raise NotImplementedError('To be overridden!')
 
-    def close(self):
+    def close(self) -> NoReturn:
         """
         This is not called and should NOT be used
         """
@@ -54,59 +77,92 @@ class AIOJSONStorage(AIOStorage, JSONStorage):
     """
     Asyncronous JSON Storage for AIOTinyDB
     """
-    def __init__(self, filename, *args, **kwargs):
+    def __init__(self, filename: StrOrBytesPath, *args: Any, **kwargs: Any) -> None:
         self.args = args
         self.kwargs = kwargs
         self._filename = filename
-        self._lock = None
-        self._handle = None
-        self._aio_handle = None
+        self._file: Optional[AsyncTextIOWrapper] = None
+        self._lock: Optional['AIOFileLock'] = None
+        self._handle: Optional[io.StringIO] = None
 
-    async def __aenter__(self):
+    async def __aenter__(self: AIOJSONStorageT) -> AIOJSONStorageT:
         if self._handle is None:
             try:
-                async with aiofiles.open(self._filename, 'r+') as in_file:
-                    payload = await in_file.read()
+                self._file = await aiofiles.open(self._filename, 'r+')
             except FileNotFoundError:
                 dirname = os.path.dirname(self._filename)
                 if dirname:
                     os.makedirs(dirname, exist_ok=True)
 
-                async with aiofiles.open(self._filename, 'w+') as in_file:
-                    payload = await in_file.read()
+                self._file = await aiofiles.open(self._filename, 'w+')
 
-            self._handle = io.StringIO(payload)
+            if FILELOCK_SUPPORTED:
+                self._lock = AIOFileLock(self._file)
+                await self._lock.acquire()
+            self._handle = io.StringIO(await self._file.read())
         return self
 
-    def write(self, data):
+    def write(self, data: Dict[str, Dict[str, Any]]) -> None:
+        assert isinstance(self._handle, io.StringIO)
         self._handle.seek(0)
         serialized = json.dumps(data, **self.kwargs)
         self._handle.write(serialized)
         self._handle.flush()
         self._handle.truncate()
 
-    async def __aexit__(self, exc_type, exc, traceback):
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         if self._handle is not None:
-            async with aiofiles.open(self._filename, 'w') as out_file:
-                await out_file.write(self._handle.getvalue())
+            assert self._file is not None
 
+            await self._file.seek(0)
+            await self._file.write(self._handle.getvalue())
+            await self._file.flush()
+            await self._file.truncate()
+            if FILELOCK_SUPPORTED:
+                assert self._lock is not None
+                self._lock.release()
+                self._lock = None
+            await self._file.close()
             self._handle.close()
+            self._file = None
+            self._handle = None
 
 
 class AIOImmutableJSONStorage(AIOJSONStorage):
     """
     Asyncronous readonly JSON Storage for AIOTinyDB
     """
-    async def __aenter__(self):
+    async def __aenter__(self: AIOJSONStorageT) -> AIOJSONStorageT:
         if self._handle is None:
-            async with aiofiles.open(self._filename) as in_file:
-                payload = await in_file.read()
-            self._handle = io.StringIO(payload)
+            self._file = await aiofiles.open(self._filename, 'r')
+            if FILELOCK_SUPPORTED:
+                self._lock = AIOFileLock(self._file)
+                await self._lock.acquire()
+            self._handle = io.StringIO(await self._file.read())
         return self
 
-    async def __aexit__(self, exc_type, exc, traceback):
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType]
+    ) -> None:
         if self._handle is not None:
-            self._handle.close()
+            assert self._file is not None
 
-    def write(self, data):
+            if FILELOCK_SUPPORTED:
+                assert self._lock is not None
+                self._lock.release()
+                self._lock = None
+            await self._file.close()
+            self._handle.close()
+            self._file = None
+            self._handle = None
+
+    def write(self, data: Dict[str, Dict[str, Any]]) -> None:
         raise ReadonlyStorageError('AIOImmutableJSONStorage cannot be written to')

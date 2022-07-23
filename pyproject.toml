@@ -1,0 +1,84 @@
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = 'aiotinydb'
+version = '2.0.0'
+description = 'asyncio compatibility shim for tinydb'
+readme = "README.md"
+requires-python = ">=3.6"
+license = { file = "LICENSE.md" }
+authors = [{ name = "Pavel Pletenev", email = "cpp.create@gmail.com" }]
+maintainers = [{ name = "d-k-bo", email = "d-k-bo@mailbox.org" }]
+classifiers = [
+    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+    'Development Status :: 4 - Beta',
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Operating System :: OS Independent',
+    'Intended Audience :: Developers',
+]
+dependencies = [
+    'tinydb>=4.7.0',
+    'aiofiles>=0.8.0',
+]
+
+    [project.optional-dependencies]
+    test = ["pytest>=7.0.1", "pytest-cov>=3.0.0"]
+
+    [project.urls]
+    Source = "https://github.com/aiotinydb/aiotinydb"
+
+[tool.flake8]
+max-line-length = 100
+# F401 -- imported but unused // using pylint
+# F811 -- redefinition of unused // using pylint
+# F821 -- undefined name // using pylint
+# F841 -- local variable is assigned to but never used // using pylint
+# E241 -- multiple spaces after ':'
+# E272 -- multiple spaces before keyword
+# E221 -- multiple spaces before operator
+# W503 -- line break before binary operator
+# E301 -- expected 1 blank line // class compactness
+ignore = [
+    "F401",
+    "F811",
+    "F821",
+    "F841",
+    "E241",
+    "E272",
+    "E221",
+    "W503",
+    "E301",
+]
+inline-quotes = "'"
+
+
+[tool.coverage.report]
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "from typing import",
+    "from typing_extensions import",
+    "if TYPE_CHECKING",
+]
+
+[tool.pylint.master]
+py-version = "3.10"
+
+[tool.pylint.similarities]
+ignore-signatures = true
+
+[tool.mypy]
+plugins = ["tinydb.mypy_plugin:plugin"]
+files = ["aiotinydb", "tests"]
+show_error_codes = true
+warn_unused_ignores = true
+warn_unused_configs = true
