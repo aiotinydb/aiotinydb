@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+This module contains the async-enabled `AIOTinyDB` database.
+"""
+
 # pylint: disable=super-init-not-called,arguments-differ
 # pylint: disable=too-many-instance-attributes
 from asyncio import Lock

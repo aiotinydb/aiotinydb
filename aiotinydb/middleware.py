@@ -14,6 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Contains the base classes `AIOMiddleware` and `AIOMiddlewareMixin` for
+async middlewares and implementations.
+"""
+
 # pylint: disable=too-few-public-methods
 from types import TracebackType
 from typing import NoReturn, Optional, Type, TypeVar

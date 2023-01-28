@@ -14,6 +14,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Contains the base class `AIOStorage` for async storages and
+implementations.
+"""
+
 # pylint: disable=super-init-not-called
 import os
 import io

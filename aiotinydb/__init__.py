@@ -14,6 +14,12 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+asyncio compatibility shim for TinyDB
+
+Enables usage of TinyDB in asyncio-aware contexts without slow synchronous IO.
+"""
+
 from .database import AIOTinyDB
 from .exceptions import DatabaseNotReady
 from .storage import AIOJSONStorage, AIOImmutableJSONStorage
