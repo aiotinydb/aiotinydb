@@ -24,7 +24,7 @@ loop.run_until_complete(test())
 loop.close()
 ```
 
-CPU-bound operations like `db.search()`, `db.update()` etc. are executed synchronously and may block the event loop under heavy load. Use multiprocessing if that's an issue (see [examples/processpool.py](examples/processpool.py) for an example).
+CPU-bound operations like `db.search()`, `db.update()` etc. are executed synchronously and may block the event loop under heavy load. Use multiprocessing if that's an issue (see [#6](https://github.com/aiotinydb/aiotinydb/issues/6#issuecomment-1125343152) and [examples/processpool.py](examples/processpool.py) for an example).
 
 ## Middleware
 
