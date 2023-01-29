@@ -7,19 +7,19 @@ name = 'aiotinydb'
 version = '2.0.0'
 description = 'asyncio compatibility shim for tinydb'
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.7"
 license = { file = "LICENSE.md" }
 authors = [{ name = "Pavel Pletenev", email = "cpp.create@gmail.com" }]
 maintainers = [{ name = "d-k-bo", email = "d-k-bo@mailbox.org" }]
 classifiers = [
-    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+    'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
     'Development Status :: 4 - Beta',
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Operating System :: OS Independent',
     'Intended Audience :: Developers',
